@@ -506,9 +506,23 @@ public class Board {
                 }
             }
             Move snapshotMove = new Move(m.piece.copy(this), m.target);
-            gameLog.add(snapshotMove);
-            move(m.piece, m.target);
+            snapshotMove.castleStr = m.castleStr;
+            String atkStr = "";
+            if(m.target.isOccupied){
+                atkStr = "x";
+            }
             
+            move(m.piece, m.target);
+            if(snapshotMove.piece instanceof Pawn && (snapshotMove.target.getRank() == 0 || snapshotMove.target.getRank() == 7)){
+                snapshotMove = new PromoteMove(snapshotMove.piece, m.target, m.piece.toString());
+            }
+            for(Piece tp : activePieces){
+                if(tp instanceof King && ((King)tp).inCheck){
+                    snapshotMove.checkStr = "+";
+                }
+            }
+            snapshotMove.attackStr = atkStr;
+            gameLog.add(snapshotMove);
         }
     }
 
@@ -530,12 +544,15 @@ public class Board {
         for(Piece pc : activePieces){
             if(pc instanceof King){
                 activePieces.forEach((piece) -> {
-                    if(contains(getVision(piece), pc.position) && piece.color != pc.color){
-                        String name = pc.color ? "White" : "Black";
-                        System.out.println("Move has placed " + name + " King into check!");
+                    if(piece.color != pc.color && contains(getVision(piece), pc.position)){
+                        //String name = pc.color ? "White" : "Black";
+                        //System.out.println("Move has placed " + name + " King into check!");
                         ((King)pc).inCheck = true;
                     }
                 });
+                if(pc.color == p.color){
+                    ((King)pc).inCheck = false;
+                }
             }
         }
     }
@@ -593,12 +610,14 @@ public class Board {
         if(playerTurn && whiteCheck){
             Move[] moves = getMoves(true);
             if(moves.length == 0){
+                gameLog.get(gameLog.size()-1).checkStr = "#";
                 return "White has been checkmated";
             }
         }
         else if(!playerTurn && blackCheck){
             Move[] moves = getMoves(false);
             if(moves.length == 0){
+                gameLog.get(gameLog.size()-1).checkStr = "#";
                 return "Black has been checkmated";
             }
         }

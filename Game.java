@@ -19,7 +19,8 @@ public class Game {
             board.printBoardState();
         }
 
-        System.out.println(board.winCondition());
+        System.out.println("\n"+board.winCondition());
+        System.out.println("\n----------Printing Game Log----------");
         board.printGameLog();
         
     }

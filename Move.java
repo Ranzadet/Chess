@@ -3,7 +3,10 @@ package Chess;
 public class Move {
     public Piece piece;
     public Square target;
+    public Square originalPosition;
     public String castleStr = "";
+    public String checkStr = "";
+    public String attackStr = "";
 
     public Move(String moveStr, Board b){
         char[] files = {'a','b','c','d','e','f','g','h'};
@@ -47,6 +50,7 @@ public class Move {
             if(b.boardArray[file1][rank1].isOccupied){
                 piece = b.boardArray[file1][rank1].getOccupant();
                 target = b.boardArray[file2][rank2];
+                originalPosition = b.boardArray[file1][rank1];
             }
             else{
                 piece = null;
@@ -67,7 +71,15 @@ public class Move {
         if(!castleStr.equals("")){
             return castleStr;
         }
-        return piece + " " + piece.position.chessPosition() +" to " + target.chessPosition();
+        // return piece + " " + piece.position.chessPosition() +" to " + target.chessPosition();
+        if(piece instanceof Pawn){
+            if(attackStr.equals(""))     
+                return target.chessPosition() + checkStr;
+            return originalPosition.chessPosition() + attackStr + target.chessPosition() + checkStr;
+        }
+        if(attackStr.equals(""))
+            return piece.toString().toUpperCase() + target.chessPosition() + checkStr;
+        return piece.toString().toUpperCase() + attackStr + target.chessPosition() + checkStr;
     }
 
 }
