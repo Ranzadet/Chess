@@ -2,7 +2,6 @@ package Chess;
 
 public class King extends Piece{
     public boolean inCheck;
-    public boolean hasMoved = false;
     
     public King(Square startPos, boolean color){
         super(startPos, color);
@@ -25,7 +24,6 @@ public class King extends Piece{
     public void move(Square target){
         Square s = position;
         super.move(target);
-        hasMoved = true;
         if(!target.getBoard().isAdjacent(s, target)){
             if(color){
                 if(target.getFile() < s.getFile()){

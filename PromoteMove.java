@@ -9,6 +9,10 @@ public class PromoteMove extends Move{
     }
 
     public String toString(){
-        return super.toString() + " = " + type;
+        String s = super.toString();
+        if(checkStr.equals("")){
+            return s + "=" + type;
+        }
+        return s.substring(0,s.length()) + "=" + type + checkStr;
     }
 }

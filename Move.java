@@ -82,4 +82,13 @@ public class Move {
         return piece.toString().toUpperCase() + attackStr + target.chessPosition() + checkStr;
     }
 
+    public Move copy(Board b){
+        Move m = new Move(piece.copy(b), b.boardArray[target.getFile()][target.getRank()]);
+        m.originalPosition = b.boardArray[originalPosition.getFile()][originalPosition.getRank()];
+        m.castleStr = castleStr;
+        m.checkStr = checkStr;
+        m.attackStr = attackStr;
+        return m;
+    }
+
 }

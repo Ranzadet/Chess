@@ -6,6 +6,7 @@ public abstract class Piece {
     public String symbol;
     public boolean color; //true for white, false for black
     public double value;
+    public boolean hasMoved;
 
     public Piece(Square startPos, boolean color){
         position = startPos;
@@ -18,6 +19,8 @@ public abstract class Piece {
     public void move(Square target){
         //System.out.println(this+" to "+target.coordinates());
         position.setOccupant(null);
+        hasMoved = true;
+        moves += 1;
         position.isOccupied = false;
         position = target;
         if(target.isOccupied)

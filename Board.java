@@ -188,11 +188,44 @@ public class Board {
                     }
                     else{
                         //attempting to move to diagonal square not occupied by piece
-                        //will have to recheck this for en pessant
+                        //will have to recheck this for en passant
                         if(positionOf(target)[0] != positionOf(p)[0]){
                             if(DEBUG)
                                 System.out.println("Space ignored: pawns can only attack diagonally, not move.");
-                            hasIssue = true;
+                            if(p.color){
+                                if(p.position.getRank() == 3){
+                                    Move mv = gameLog.get(gameLog.size()-1);
+                                    if(Math.abs(mv.target.getFile() - p.position.getFile()) == 1 && mv.piece instanceof Pawn && mv.originalPosition.getRank() == 1 && ((Pawn)mv.piece).moves == 1 && mv.target.getFile() == target.getFile()){
+                                        // System.out.println("En Passant!");
+                                    }
+                                    else{
+                                        hasIssue = true;
+                                    }
+                                }
+                                else{
+                                    hasIssue = true;
+                                }
+                            }
+                            else{
+                                if(p.position.getRank() == 4){
+                                    Move mv = gameLog.get(gameLog.size()-1);
+                                    if(Math.abs(mv.target.getFile() - p.position.getFile()) == 1 && mv.piece instanceof Pawn && mv.originalPosition.getRank() == 6 && ((Pawn)mv.piece).moves == 1 && mv.target.getFile() == target.getFile()){
+                                        // System.out.println("En Passant!");
+                                    }
+                                    else{
+                                        if(target.getRank() == 5 && target.getFile() == 1){
+                                            // System.out.println(mv);
+                                            // System.out.println(mv.originalPosition.coordinates());
+                                            // if(mv.piece instanceof Pawn)
+                                            //     System.out.println(((Pawn)mv.piece).hasMoved);
+                                        }
+                                        hasIssue = true;
+                                    }
+                                }
+                                else{
+                                    hasIssue = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -398,6 +431,12 @@ public class Board {
             }
         }
 
+        for(Move tempMove : gameLog){
+            if(tempMove != null){
+                b.gameLog.add(tempMove.copy(b));
+            }
+        }
+
         if(tempPiece instanceof Pawn && (tempSquare.getRank() == 7 || tempSquare.getRank() == 0)){
             ((Pawn)tempPiece).promoteMove(tempSquare,"q");
         }
@@ -511,6 +550,11 @@ public class Board {
             if(m.target.isOccupied){
                 atkStr = "x";
             }
+            else{
+                if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
+                    atkStr = "x";
+                }
+            }
             
             move(m.piece, m.target);
             if(snapshotMove.piece instanceof Pawn && (snapshotMove.target.getRank() == 0 || snapshotMove.target.getRank() == 7)){
@@ -522,6 +566,9 @@ public class Board {
                 }
             }
             snapshotMove.attackStr = atkStr;
+            snapshotMove.originalPosition = m.originalPosition;
+            snapshotMove.piece.hasMoved = true;
+            snapshotMove.piece.moves += 1;
             gameLog.add(snapshotMove);
         }
     }

@@ -2,7 +2,6 @@ package Chess;
 import java.util.Scanner;
 
 public class Pawn extends Piece{
-    public boolean hasMoved = false;
     
     public Pawn(Square startPos, boolean color){
         super(startPos, color);
@@ -18,13 +17,19 @@ public class Pawn extends Piece{
         Square s = new Square(position.getFile(), position.getRank());
         s.setBoard(b);
         Pawn p = new Pawn(s, color);
+        p.moves = moves;
+        p.hasMoved = hasMoved;
         return p;
     }
 
     
     public void move(Square target){
+        if(target.getFile() != position.getFile() && target.isOccupied == false){
+            position.getBoard().boardArray[target.getFile()][position.getRank()].getOccupant().destroy();
+            position.getBoard().boardArray[target.getFile()][position.getRank()].setOccupant(null);
+            position.getBoard().boardArray[target.getFile()][position.getRank()].isOccupied = false;
+        }
         super.move(target);
-        hasMoved = true;
         if(target.getRank() == 7 || target.getRank() == 0){
             Scanner scanner = new Scanner(System.in);
             System.out.println("Pawn promoting! What piece would you like to promote to?");
