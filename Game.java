@@ -7,19 +7,34 @@ public class Game {
 
 
     public static void main(String[] args) {
-        board = new Board();
-        board.standardSetup();
-        board.printBoardState();
         Scanner scanner = new Scanner(System.in);
+        board = new Board();
 
+        String configuration = scanner.nextLine();
+        String fenStr = "";
+        if(configuration.toUpperCase().equals("FEN")){
+            fenStr = scanner.nextLine();
+            board.loadFEN(fenStr);
+        }
+        else{
+            board.standardSetup();
+        }
+        board.printBoardState();
+
+        boolean interrupted = false;
         while (board.winCondition().equals("Game in Progress")){
             String moveStr = scanner.nextLine();
+            if(moveStr.equals("draw") || moveStr.equals("ff") || moveStr.equals("resign")){
+                interrupted = true;
+                break;
+            }
             Move m = new Move(moveStr, board);
             board.move(m);
             board.printBoardState();
         }
 
-        System.out.println("\n"+board.winCondition());
+        if(!interrupted)
+            System.out.println("\n"+board.winCondition());
         System.out.println("\n----------Printing Game Log----------");
         board.printGameLog();
         

@@ -10,7 +10,7 @@ public class Queen extends Piece{
         else{
             symbol = "q";
         }
-        value = 9;
+        value = 900;
     }
 
     

@@ -5,8 +5,9 @@ public abstract class Piece {
     public int moves;
     public String symbol;
     public boolean color; //true for white, false for black
-    public double value;
+    public int value;
     public boolean hasMoved;
+    public boolean wasPawn;
 
     public Piece(Square startPos, boolean color){
         position = startPos;

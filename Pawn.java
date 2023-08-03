@@ -10,7 +10,8 @@ public class Pawn extends Piece{
         else{
             symbol = "p";
         }
-        value = 1;
+        value = 100;
+        wasPawn = true;
     }
 
     public Pawn copy(Board b){
@@ -46,18 +47,20 @@ public class Pawn extends Piece{
     private void promote(String type){
         type = type.toLowerCase();
         //System.out.println("Promoting to " + type);
+        Piece p;
         if(type.equals("knight") || type.equals("n") || type.equals("kn")){
-            Knight kn = new Knight(position, color);
+            p = new Knight(position, color);
         }
         else if(type.equals("bishop") || type.equals("b")){
-            Bishop b = new Bishop(position, color);
+            p = new Bishop(position, color);
         }
         else if(type.equals("rook") || type.equals("r")){
-            Rook r = new Rook(position, color);
+            p = new Rook(position, color);
         }
         else{
-            Queen q = new Queen(position, color);
+            p = new Queen(position, color);
         }
+        p.wasPawn = true;
         destroy();
     }
 

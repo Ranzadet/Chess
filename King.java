@@ -11,7 +11,7 @@ public class King extends Piece{
             symbol = "k";
         }
         inCheck = false;
-        value = 9999;
+        value = 99999;
     }
 
     public King copy(Board b){

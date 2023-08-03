@@ -10,6 +10,8 @@ public class Board {
     private boolean playerTurn = true;
     public ArrayList<Move> gameLog;
     private final boolean DEBUG = false;
+    public int halfClock = 0;
+    public int fullClock = 0;
 
     public Board(){
         boardArray = new Square[8][8];
@@ -54,6 +56,9 @@ public class Board {
         }
     }
 
+    public boolean getPlayer(){
+        return playerTurn;
+    }
 
     public boolean isAdjacent(Square s1, Square s2){
         int xdist = Math.abs(s1.getFile() - s2.getFile());
@@ -132,7 +137,6 @@ public class Board {
     }
 
 
-    //NOT DONE
     public Square[] getVision(Piece p){
 
         ArrayList<Square> seenSquares = new ArrayList<>();
@@ -151,8 +155,6 @@ public class Board {
                 if(p instanceof Pawn){
                     if(Math.abs(positionOf(target)[1] - positionOf(p)[1]) != 1){
                         if(((Pawn)p).hasMoved){
-                            if(DEBUG)
-                                System.out.println("Space ignored: pawns must advance 1 space per movement");
                             hasIssue = true;
                         }
                         else{
@@ -168,21 +170,15 @@ public class Board {
                     }
                     else{
                         if (positionOf(target)[1] - positionOf(p)[1] != -1 && p.color){
-                            if(DEBUG)
-                                System.out.println("Space ignored: White pawns must advance up the board.");
                             hasIssue = true;
                         }
                         else if(positionOf(target)[1] - positionOf(p)[1] != 1 && !p.color){
-                            if(DEBUG)
-                                System.out.println("Space ignored: Black pawns must advance down the board.");
                             hasIssue = true;
                         }
                     }
 
                     if(target.isOccupied){
                         if(Math.abs(positionOf(target)[0] - positionOf(p)[0]) != 1){
-                            if(DEBUG)
-                                System.out.println("Space ignored: pawns can only attack occupied squares to their immediate diagonal.");
                             hasIssue = true;
                         }
                     }
@@ -190,10 +186,8 @@ public class Board {
                         //attempting to move to diagonal square not occupied by piece
                         //will have to recheck this for en passant
                         if(positionOf(target)[0] != positionOf(p)[0]){
-                            if(DEBUG)
-                                System.out.println("Space ignored: pawns can only attack diagonally, not move.");
                             if(p.color){
-                                if(p.position.getRank() == 3){
+                                if(p.position.getRank() == 3 && gameLog.size() > 0){
                                     Move mv = gameLog.get(gameLog.size()-1);
                                     if(Math.abs(mv.target.getFile() - p.position.getFile()) == 1 && mv.piece instanceof Pawn && mv.originalPosition.getRank() == 1 && ((Pawn)mv.piece).moves == 1 && mv.target.getFile() == target.getFile()){
                                         // System.out.println("En Passant!");
@@ -207,7 +201,7 @@ public class Board {
                                 }
                             }
                             else{
-                                if(p.position.getRank() == 4){
+                                if(p.position.getRank() == 4 && gameLog.size() > 0){
                                     Move mv = gameLog.get(gameLog.size()-1);
                                     if(Math.abs(mv.target.getFile() - p.position.getFile()) == 1 && mv.piece instanceof Pawn && mv.originalPosition.getRank() == 6 && ((Pawn)mv.piece).moves == 1 && mv.target.getFile() == target.getFile()){
                                         // System.out.println("En Passant!");
@@ -331,8 +325,6 @@ public class Board {
             }
         }
         
-        if(DEBUG)
-            System.out.println("Seen squares: "+visionCount);
         Square[] squaresArr = new Square[seenSquares.size()];
         for(int i = 0;i<seenSquares.size();i++){
             squaresArr[i] = seenSquares.get(i);
@@ -367,8 +359,6 @@ public class Board {
 
     public boolean contains(Square[] subset, Piece p){
         for(Square s : subset){
-            if(DEBUG)
-                System.out.println(s);
             if(s != null && s.isOccupied && s.getOccupant() == p){
                 return true;
             }
@@ -388,26 +378,22 @@ public class Board {
     public boolean wouldCheck(Move mv){
         Piece p = mv.piece;
         Square target = mv.target;
-        if(DEBUG)
-            System.out.println("Would check target position: "+target.testString());
         Piece tempPiece = null;
         Square tempSquare = null;
         King k = null;
-        Board b = new Board(); 
+        Board b = copy(); //
         for (int file = 0;file<8;file++){
             for(int rank=0;rank<8;rank++){
                 if(boardArray[file][rank].isOccupied){
-                    Piece p2 = boardArray[file][rank].getOccupant().copy(b);
-                    Square s = p2.position;
-
+                    Piece p2 = b.boardArray[file][rank].getOccupant();
                     if(boardArray[file][rank] == p.position){
                         tempPiece = p2;
                     }
-                    
-                    b.boardArray[file][rank] = s;
+
                     if (boardArray[file][rank] == target){
-                        tempSquare = s;
+                        tempSquare = b.boardArray[file][rank];
                     }
+
                     if(p.color){
                         if (boardArray[file][rank].getOccupant() instanceof King){
                             if(boardArray[file][rank].getOccupant().color){
@@ -431,20 +417,12 @@ public class Board {
             }
         }
 
-        for(Move tempMove : gameLog){
-            if(tempMove != null){
-                b.gameLog.add(tempMove.copy(b));
-            }
-        }
-
-        if(tempPiece instanceof Pawn && (tempSquare.getRank() == 7 || tempSquare.getRank() == 0)){
-            ((Pawn)tempPiece).promoteMove(tempSquare,"q");
+        if(mv instanceof PromoteMove){
+            ((Pawn)tempPiece).promoteMove(tempSquare,((PromoteMove)mv).type);
         }
         else{
             tempPiece.move(tempSquare);
         }
-        if(DEBUG)
-            b.printBoardState();
 
         boolean checked = false;
 
@@ -464,8 +442,6 @@ public class Board {
             }
         }
 
-        if(DEBUG)
-            System.out.println("Would check: "+checked);
         return checked;
         
     }
@@ -487,14 +463,14 @@ public class Board {
             return false;
         }
 
-        if(wouldCheck(m)){
-            System.out.println("Invalid move: " + p + " to " + target.testString() + " would result in a check.");
-            return false;
-        }
-
         if(!contains(getVision(p), target)){
             System.out.println("Invalid move: " + p + " on square " + p.position.coordinates() + " cannot move to "
              + target.coordinates() + ".");
+            return false;
+        }
+
+        if(wouldCheck(m)){
+            System.out.println("Invalid move: " + p + " to " + target.testString() + " would result in a check.");
             return false;
         }
 
@@ -510,20 +486,14 @@ public class Board {
         if(p.color != playerTurn){
             String name = p.color ? "White" : "Black";
             name += "'s";
-            if(DEBUG)
-                System.out.println("Invalid move: It is not " + name + " turn!");
             return false;
         }
 
         if(target.isOccupied && target.getOccupant().color == p.color){
-            if(DEBUG)
-                System.out.println("Invalid move: pieces cannot attack pieces of their own color.");
             return false;
         }
 
         if(wouldCheck(m)){
-            if(DEBUG)
-                System.out.println("Invalid move: " + p + " to " + target.testString() + " would result in a check.");
             return false;
         }
         
@@ -583,6 +553,14 @@ public class Board {
         // System.out.println(count);
         // System.out.println("occupied; "+boardArray[4][1].isOccupied);
 
+        if(p instanceof Pawn || target.isOccupied){
+            halfClock = 0;
+        }
+        else{
+            halfClock++;
+        }
+        if(!playerTurn)
+            fullClock++;
         p.move(target);
         playerTurn = !playerTurn;
 
@@ -602,6 +580,11 @@ public class Board {
                 }
             }
         }
+    }
+
+    //TODO
+    public void unMove(Move m){
+        return;
     }
 
 
@@ -639,9 +622,7 @@ public class Board {
         return movesArr;
     }
 
-    
-    public String winCondition(){
-        //TODO: check for which player is in check after each turn, and what moves can be taken to get them out of check
+    public boolean isCheckmated(boolean player){
         boolean whiteCheck = false;
         boolean blackCheck = false;
         for(Piece p : activePieces){
@@ -654,36 +635,69 @@ public class Board {
             }
         }
 
-        if(playerTurn && whiteCheck){
+        if(player && whiteCheck){
             Move[] moves = getMoves(true);
             if(moves.length == 0){
-                gameLog.get(gameLog.size()-1).checkStr = "#";
-                return "White has been checkmated";
+                return true;
             }
         }
-        else if(!playerTurn && blackCheck){
+        else if(!player && blackCheck){
             Move[] moves = getMoves(false);
             if(moves.length == 0){
-                gameLog.get(gameLog.size()-1).checkStr = "#";
-                return "Black has been checkmated";
+                return true;
             }
         }
-        else{
-            if(playerTurn){
-                Move[] moves = getMoves(true);
-                if(moves.length == 0){
-                    return "Draw by stalemate";
-                }
-            }
-            else{
-                Move[] moves = getMoves(false);
-                if(moves.length == 0){
-                    return "Draw by stalemate";
+        return false;
+    }
+
+    public boolean isDraw(boolean player){
+        if(halfClock >= 50)
+            return true;
+        Move[] moves = getMoves(player);
+        if(moves.length == 0){
+            return true;
+        }
+        return false;
+    }
+
+    
+    public String winCondition(){
+        boolean isMated = isCheckmated(playerTurn);
+        if(isMated){
+            gameLog.get(gameLog.size()-1).checkStr = "#";
+            return playerTurn ? "White has been checkmated" : "Black has been checkmated";
+        }
+
+        boolean draw = isDraw(playerTurn);
+        if(draw){
+            if(halfClock >= 50)
+                return "Draw by fifty move rule";
+            return "Draw by stalemate";
+        }
+
+        return "Game in Progress";
+    }
+    
+
+    public Board copy(){
+        Board b = new Board(); 
+        for (int file = 0;file<8;file++){
+            for(int rank=0;rank<8;rank++){
+                if(boardArray[file][rank].isOccupied){
+                    Piece p2 = boardArray[file][rank].getOccupant().copy(b);
+                    Square s = p2.position;
+                    b.boardArray[file][rank] = s;
                 }
             }
         }
 
-        return "Game in Progress";
+        for(Move tempMove : gameLog){
+            if(tempMove != null){
+                b.gameLog.add(tempMove.copy(b));
+            }
+        }
+
+        return b;
     }
 
 
@@ -725,5 +739,129 @@ public class Board {
             Pawn p = new Pawn(boardArray[i][6], true);
             activePieces.add(p);
         }
+    }
+
+    public void loadFEN(String fen){
+        String[] fenlis = fen.split(" ");
+        String[] cols = fenlis[0].split("/");
+
+        //fenlis[0] => piece positions
+        for(int rank = 0; rank < 8; rank++){
+            int file = 0;
+            for(int f = 0; f < cols[rank].length(); f++){
+                char c = cols[rank].charAt(f);
+                if(Character.isDigit(c)){
+                    file += Integer.parseInt(""+c);
+                }
+                else if(Character.isUpperCase(c)){
+                    Piece p;
+                    if(c == 'R'){
+                        p = new Rook(boardArray[file][rank], true);
+                    }
+                    else if(c == 'B'){
+                        p = new Bishop(boardArray[file][rank], true);
+                    }
+                    else if(c == 'N'){
+                        p = new Knight(boardArray[file][rank], true);
+                    }
+                    else if(c == 'Q'){
+                        p = new Queen(boardArray[file][rank], true);
+                    }
+                    else if(c == 'K'){
+                        p = new King(boardArray[file][rank], true);
+                    }
+                    else{
+                        p = new Pawn(boardArray[file][rank], true);
+                    }
+                    activePieces.add(p);
+                    file += 1;
+                }
+                else{
+                    Piece p;
+                    if(c == 'r'){
+                        p = new Rook(boardArray[file][rank], false);
+                    }
+                    else if(c == 'b'){
+                        p = new Bishop(boardArray[file][rank], false);
+                    }
+                    else if(c == 'n'){
+                        p = new Knight(boardArray[file][rank], false);
+                    }
+                    else if(c == 'q'){
+                        p = new Queen(boardArray[file][rank], false);
+                    }
+                    else if(c == 'k'){
+                        p = new King(boardArray[file][rank], false);
+                    }
+                    else{
+                        p = new Pawn(boardArray[file][rank], false);
+                    }
+                    activePieces.add(p);
+                    file += 1;
+                }
+            }
+        }
+
+        //fenlis[1] => playyer turn
+        playerTurn = fenlis[1].equals("w"); //if w, then turn = true (white); else, turn = false (black)
+
+        //fenlis[2] => castling rights
+        for(Piece p : activePieces){
+            if(p instanceof King || p instanceof Rook){
+                p.hasMoved = true;
+            }
+        }
+
+        for(int i = 0; i < fenlis[2].length(); i++){
+            char c = fenlis[2].charAt(i);
+            if(c == '-'){
+                //do nothing; pieces are already set to not be able to castle
+            }
+            else if(Character.isUpperCase(c)){
+                int rookspace = c == 'K' ? 0 : 7; //if 'K', can kingside castle; else, c == 'Q' means queenside castle
+                for(Piece p : activePieces){
+                    if(p instanceof King){
+                        p.hasMoved = false;
+                    }
+                    if(p instanceof Rook && p.position.getFile() == rookspace && p.position.getRank() == 7){
+                        p.hasMoved = false;
+                    }
+                }
+            }
+            else{
+                int rookspace = c == 'k' ? 0 : 7;
+                for(Piece p : activePieces){
+                    if(p instanceof King){
+                        p.hasMoved = false;
+                    }
+                    if(p instanceof Rook && p.position.getFile() == rookspace && p.position.getRank() == 0){
+                        p.hasMoved = false;
+                    }
+                }
+            }
+        }
+
+        //fenlis[3] => en passant spaces
+        if(fenlis[3].charAt(0) != '-'){
+            int file = 0;
+            for(char c = 'a'; c != fenlis[3].charAt(0); c++){
+                file++;
+            }
+            int rank = 8 - Integer.parseInt(""+fenlis[3].charAt(1));
+
+            int direction = rank == 2 ? 1 : -1;
+            Piece p = boardArray[file][rank+direction].getOccupant();
+            p.hasMoved = true;
+            p.moves = 1;
+            Move m = new Move(p, boardArray[file][rank+direction]);
+            m.originalPosition = boardArray[file][rank-direction];
+            gameLog.add(m);
+        }
+
+        //fenlis[4] => halfmove clock
+        halfClock = Integer.parseInt(fenlis[4]);
+
+        //fenlis[5] => fullmove clock
+        fullClock = Integer.parseInt(fenlis[5]);
     }
 }

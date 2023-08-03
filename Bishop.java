@@ -9,7 +9,7 @@ public class Bishop extends Piece{
         else{
             symbol = "b";
         }
-        value = 3.15;
+        value = 315;
     }
 
     

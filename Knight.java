@@ -10,7 +10,7 @@ public class Knight extends Piece{
         else{
             symbol = "n";
         }
-        value = 3;
+        value = 300;
     }
 
     public Knight copy(Board b){

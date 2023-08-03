@@ -10,7 +10,7 @@ public class Rook extends Piece{
         else{
             symbol = "r";
         }
-        value = 5;
+        value = 500;
     }
 
     
