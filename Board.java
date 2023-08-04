@@ -22,7 +22,7 @@ public class Board {
                 boardArray[i][j] = s;
             }
         }
-        gameLog = new ArrayList<>();
+        gameLog = new ArrayList<>(200);
     }
 
     public void printBoardState(){
@@ -501,13 +501,36 @@ public class Board {
     }
 
 
+    public void searchMove(Move m){
+            if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
+                if(m.piece.position.getFile() > m.target.getFile()){
+                    m.castleStr = "O-O-O";
+                }else{
+                    m.castleStr = "O-O";
+                }
+            }
+            if(m.target.isOccupied){
+                m.attackStr = m.target.getOccupant().toString();
+            }
+            else{
+                if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
+                    m.attackStr = "p";
+                }
+            }
+            if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile() && !m.target.isOccupied){
+                m.isPassant = true;
+            }
+            
+            move(m.piece, m.target);
+    }
+
     public void move(Move m){
         if(m.piece == null){
             System.out.println("Invald move: there is no piece located on that square.");
             return;
         }
         if(isValidMove(m)){
-            if(m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
+            if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
                 if(m.piece.position.getFile() > m.target.getFile()){
                     m.castleStr = "O-O-O";
                 }else{
@@ -518,11 +541,11 @@ public class Board {
             snapshotMove.castleStr = m.castleStr;
             String atkStr = "";
             if(m.target.isOccupied){
-                atkStr = "x";
+                atkStr = m.target.getOccupant().toString();
             }
             else{
                 if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
-                    atkStr = "x";
+                    atkStr = "p";
                 }
             }
             
@@ -582,9 +605,120 @@ public class Board {
         }
     }
 
-    //TODO
+    //TODO: test
     public void unMove(Move m){
-        return;
+        playerTurn = !playerTurn;
+        gameLog.remove(gameLog.size()-1);
+        halfClock--;
+        if(!m.piece.color){
+            fullClock--;
+        }
+
+        if(m.castleStr.equals("O-O")){
+            if(m.piece.color){
+                boardArray[5][7].getOccupant().move(boardArray[7][7]);
+                boardArray[6][7].getOccupant().move(boardArray[4][7]);
+                boardArray[4][7].getOccupant().hasMoved = false;
+                boardArray[7][7].getOccupant().hasMoved = false;
+                boardArray[7][7].getOccupant().moves = 0;
+            }
+            else{
+                boardArray[5][0].getOccupant().move(boardArray[7][0]);
+                boardArray[6][0].getOccupant().move(boardArray[4][0]);
+                boardArray[4][0].getOccupant().hasMoved = false;
+                boardArray[7][0].getOccupant().hasMoved = false;
+                boardArray[7][0].getOccupant().moves = 0;
+            }
+            m.piece.moves = 0;
+            return;
+        }
+        if(m.castleStr.equals("O-O-O")){
+            if(m.piece.color){
+                boardArray[3][7].getOccupant().move(boardArray[0][7]);
+                boardArray[2][7].getOccupant().move(boardArray[4][7]);
+                boardArray[4][7].getOccupant().hasMoved = false;
+                boardArray[0][7].getOccupant().hasMoved = false;
+                boardArray[0][7].getOccupant().moves = 0;
+            }
+            else{
+                boardArray[3][0].getOccupant().move(boardArray[0][0]);
+                boardArray[2][0].getOccupant().move(boardArray[4][0]);
+                boardArray[4][0].getOccupant().hasMoved = false;
+                boardArray[0][0].getOccupant().hasMoved = false;
+                boardArray[0][0].getOccupant().moves = 0;
+            }
+            m.piece.moves = 0;
+            return;
+        }
+        
+        if(m.isPassant){
+            m.piece.move(m.originalPosition);
+            m.piece.moves -= 2;
+            Pawn p = new Pawn(boardArray[m.target.getFile()][m.piece.position.getRank()], !m.piece.color);
+            p.moves = 1;
+            p.hasMoved = true;
+            return;
+        }
+
+        if(m.attackStr.equals("")){
+            if(m instanceof PromoteMove){
+                Pawn p = new Pawn(m.originalPosition, m.piece.color);
+                p.hasMoved = true;
+                p.moves = m.piece.moves - 1;
+                m.target.setOccupant(null);
+                m.target.isOccupied = false;
+                m.piece.destroy();
+                return;
+            }
+
+            m.piece.move(m.originalPosition);
+            m.piece.moves -= 2;
+            if(m.piece.moves == 0){
+                m.piece.hasMoved = false;
+            }
+            return;
+        }
+
+        //else, capture move
+        if(m instanceof PromoteMove){
+            Pawn p = new Pawn(m.originalPosition, m.piece.color);
+            p.hasMoved = true;
+            p.moves = m.piece.moves - 1;
+            m.target.setOccupant(null);
+            m.target.isOccupied = false;
+            m.piece.destroy();
+        }
+        else{
+            m.piece.move(m.originalPosition);
+            m.piece.moves -= 2;
+            if(m.piece.moves == 0){
+                m.piece.hasMoved = false;
+            }
+        }
+
+        Piece replacement = null;
+        if(m.attackStr.toLowerCase().equals("q")){
+            replacement = new Queen(m.target, !m.piece.color);
+        }
+        else if(m.attackStr.toLowerCase().equals("r")){
+            replacement = new Rook(m.target, !m.piece.color);
+        }
+        else if(m.attackStr.toLowerCase().equals("n")){
+            replacement = new Knight(m.target, !m.piece.color);
+        }
+        else if(m.attackStr.toLowerCase().equals("b")){
+            replacement = new Bishop(m.target, !m.piece.color);
+        }
+        else if(m.attackStr.toLowerCase().equals("p")){
+            replacement = new Pawn(m.target, !m.piece.color);
+        }
+        replacement.moves = m.targetMoves;
+        if(m.targetMoves == 0){
+            replacement.hasMoved = false;
+        }
+
+        
+
     }
 
 

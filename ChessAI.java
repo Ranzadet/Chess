@@ -27,17 +27,17 @@ public class ChessAI {
     }
 
     private int minimax(int depth, double alpha, double beta){
-        Move[] moves = b.getMoves(b.getPlayer());
+        Move[] moves = board.getMoves(board.getPlayer());
         if(moves.length == 0){
-            for(Piece p : b.activePieces){
-                if(p instanceof King && p.color == b.getPlayer() && ((King)p).inCheck){
-                    return b.getPlayer() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+            for(Piece p : board.activePieces){
+                if(p instanceof King && p.color == board.getPlayer() && ((King)p).inCheck){
+                    return board.getPlayer() ? Integer.MIN_VALUE : Integer.MAX_VALUE;
                 }
             }
             return 0; //Draw
         }
         if(depth == 0){
-            return evaluate(b);
+            return evaluate(board);
         }
 
         int movepos = -1;
@@ -84,7 +84,10 @@ public class ChessAI {
         int positions = 0;
 
         for(Move m : moves){
-
+            board.move(m);
+            positions += moveGenerationTest(depth-1);
+            board.unMove(m);
         }
+        return positions;
     }
 }

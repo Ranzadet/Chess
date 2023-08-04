@@ -7,6 +7,8 @@ public class Move {
     public String castleStr = "";
     public String checkStr = "";
     public String attackStr = "";
+    public boolean isPassant = false;
+    public int targetMoves;
 
     public Move(String moveStr, Board b){
         char[] files = {'a','b','c','d','e','f','g','h'};
@@ -50,6 +52,8 @@ public class Move {
             if(b.boardArray[file1][rank1].isOccupied){
                 piece = b.boardArray[file1][rank1].getOccupant();
                 target = b.boardArray[file2][rank2];
+                if(target.isOccupied)
+                    targetMoves = target.getOccupant().moves;
                 originalPosition = b.boardArray[file1][rank1];
             }
             else{
@@ -65,6 +69,8 @@ public class Move {
     public Move(Piece p, Square s){
         piece = p;
         target = s;
+        if(s.isOccupied)
+            targetMoves = s.getOccupant().moves;
     }
 
     public String toString(){
@@ -75,11 +81,11 @@ public class Move {
         if(piece instanceof Pawn){
             if(attackStr.equals(""))     
                 return target.chessPosition() + checkStr;
-            return originalPosition.chessPosition() + attackStr + target.chessPosition() + checkStr;
+            return originalPosition.chessPosition() + "x" + target.chessPosition() + checkStr;
         }
         if(attackStr.equals(""))
             return piece.toString().toUpperCase() + target.chessPosition() + checkStr;
-        return piece.toString().toUpperCase() + attackStr + target.chessPosition() + checkStr;
+        return piece.toString().toUpperCase() + "x" + target.chessPosition() + checkStr;
     }
 
     public Move copy(Board b){
@@ -88,6 +94,7 @@ public class Move {
         m.castleStr = castleStr;
         m.checkStr = checkStr;
         m.attackStr = attackStr;
+        m.isPassant = isPassant;
         return m;
     }
 

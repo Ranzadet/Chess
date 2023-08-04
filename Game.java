@@ -31,6 +31,8 @@ public class Game {
             Move m = new Move(moveStr, board);
             board.move(m);
             board.printBoardState();
+            board.unMove(m);
+            board.printBoardState();
         }
 
         if(!interrupted)
