@@ -25,7 +25,7 @@ public class Pawn extends Piece{
 
     
     public void move(Square target){
-        if(target.getFile() != position.getFile() && target.isOccupied == false){
+        if(target.getFile() != position.getFile() && target.isOccupied == false && (color && target.getRank() < position.getRank() || !color && target.getRank() > position.getRank())){
             position.getBoard().boardArray[target.getFile()][position.getRank()].getOccupant().destroy();
             position.getBoard().boardArray[target.getFile()][position.getRank()].setOccupant(null);
             position.getBoard().boardArray[target.getFile()][position.getRank()].isOccupied = false;

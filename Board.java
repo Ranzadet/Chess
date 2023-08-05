@@ -231,7 +231,7 @@ public class Board {
                 else if(p instanceof King){
                     if(!isAdjacent(p.position, target)){
                         if(p.color && target.getRank() == p.position.getRank() && !((King)p).hasMoved){
-                            if(target.getFile() == 2 && boardArray[0][7].isOccupied && boardArray[0][7].getOccupant() instanceof Rook && !((Rook)boardArray[0][7].getOccupant()).hasMoved && !containsCollision(p.position, boardArray[0][7])){
+                            if(target.getFile() == 2 && boardArray[0][7].isOccupied && boardArray[0][7].getOccupant() instanceof Rook && !boardArray[0][7].getOccupant().hasMoved && !containsCollision(p.position, boardArray[0][7])){
                                 //white king castle queenside
                                 //check for move through / out of check
                                 if(((King)p).inCheck || wouldCheck(new Move(p, boardArray[3][7]))){
@@ -242,7 +242,7 @@ public class Board {
                                 }
                                 
                             }
-                            else if(target.getFile() == 6 && boardArray[7][7].isOccupied && boardArray[7][7].getOccupant() instanceof Rook && !((Rook)boardArray[7][7].getOccupant()).hasMoved && !containsCollision(p.position, boardArray[7][7])){
+                            else if(target.getFile() == 6 && boardArray[7][7].isOccupied && boardArray[7][7].getOccupant() instanceof Rook && !boardArray[7][7].getOccupant().hasMoved && !containsCollision(p.position, boardArray[7][7])){
                                 //white king castle kingside
                                 if(((King)p).inCheck || wouldCheck(new Move(p, boardArray[5][7]))){
                                     hasIssue = true;
@@ -256,16 +256,16 @@ public class Board {
                             }
                         }
                         else if(!p.color && target.getRank() == p.position.getRank() && !((King)p).hasMoved){
-                            if(target.getFile() == 2 && boardArray[0][0].isOccupied && boardArray[0][0].getOccupant() instanceof Rook && !((Rook)boardArray[0][0].getOccupant()).hasMoved && !containsCollision(p.position, boardArray[0][0])){
-                                //white king castle queenside
+                            if(target.getFile() == 2 && boardArray[0][0].isOccupied && boardArray[0][0].getOccupant() instanceof Rook && !boardArray[0][0].getOccupant().hasMoved && !containsCollision(p.position, boardArray[0][0])){
+                                //black king castle queenside
                                 //check for move through / out of check
                                 if(((King)p).inCheck || wouldCheck(new Move(p, boardArray[3][0]))){
                                     hasIssue = true;
                                 }
                                 
                             }
-                            else if(target.getFile() == 6 && boardArray[7][0].isOccupied && boardArray[7][0].getOccupant() instanceof Rook && !((Rook)boardArray[7][0].getOccupant()).hasMoved && !containsCollision(p.position, boardArray[7][0])){
-                                //white king castle kingside
+                            else if(target.getFile() == 6 && boardArray[7][0].isOccupied && boardArray[7][0].getOccupant() instanceof Rook && !boardArray[7][0].getOccupant().hasMoved && !containsCollision(p.position, boardArray[7][0])){
+                                //black king castle kingside
                                 if(((King)p).inCheck || wouldCheck(new Move(p, boardArray[5][0]))){
                                     hasIssue = true;
                                 }
@@ -537,8 +537,12 @@ public class Board {
                     m.castleStr = "O-O";
                 }
             }
+            if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile() && !m.target.isOccupied){
+                m.isPassant = true;
+            }
             Move snapshotMove = new Move(m.piece.copy(this), m.target);
             snapshotMove.castleStr = m.castleStr;
+            snapshotMove.isPassant = m.isPassant;
             String atkStr = "";
             if(m.target.isOccupied){
                 atkStr = m.target.getOccupant().toString();
@@ -952,7 +956,7 @@ public class Board {
                 //do nothing; pieces are already set to not be able to castle
             }
             else if(Character.isUpperCase(c)){
-                int rookspace = c == 'K' ? 0 : 7; //if 'K', can kingside castle; else, c == 'Q' means queenside castle
+                int rookspace = c == 'K' ? 7 : 0; //if 'K', can kingside castle; else, c == 'Q' means queenside castle
                 for(Piece p : activePieces){
                     if(p instanceof King){
                         p.hasMoved = false;
@@ -963,7 +967,7 @@ public class Board {
                 }
             }
             else{
-                int rookspace = c == 'k' ? 0 : 7;
+                int rookspace = c == 'k' ? 7 : 0;
                 for(Piece p : activePieces){
                     if(p instanceof King){
                         p.hasMoved = false;

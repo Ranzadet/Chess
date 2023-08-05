@@ -9,30 +9,35 @@ public class Game {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         board = new Board();
-
-        String configuration = scanner.nextLine();
-        String fenStr = "";
-        if(configuration.toUpperCase().equals("FEN")){
-            fenStr = scanner.nextLine();
-            board.loadFEN(fenStr);
-        }
-        else{
-            board.standardSetup();
-        }
+        board.standardSetup();
         board.printBoardState();
+        
 
         boolean interrupted = false;
+        Move m = null;
         while (board.winCondition().equals("Game in Progress")){
             String moveStr = scanner.nextLine();
             if(moveStr.equals("draw") || moveStr.equals("ff") || moveStr.equals("resign")){
                 interrupted = true;
                 break;
             }
-            Move m = new Move(moveStr, board);
-            board.move(m);
-            board.printBoardState();
-            board.unMove(m);
-            board.printBoardState();
+            else if(moveStr.toLowerCase().equals("fen") || moveStr.toLowerCase().equals("load") || moveStr.toLowerCase().equals("load fen")){
+                String fenStr = "";
+                fenStr = scanner.nextLine();
+                board = new Board();
+                board.loadFEN(fenStr);
+                board.printBoardState();
+            }
+            else if(moveStr.equals("unmove")){
+                board.unMove(m);
+                board.printBoardState();
+            }
+            else{
+                m = new Move(moveStr, board);
+                board.move(m);
+                board.printBoardState();
+            }
+            
         }
 
         if(!interrupted)

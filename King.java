@@ -25,7 +25,7 @@ public class King extends Piece{
         Square s = position;
         super.move(target);
         if(!target.getBoard().isAdjacent(s, target)){
-            if(color && target.getBoard().boardArray[4][7].isOccupied){
+            if(color && !target.getBoard().boardArray[4][7].isOccupied){
                 if(target.getFile() < s.getFile()){
                     castle((Rook)position.getBoard().boardArray[0][7].getOccupant());
                 }
@@ -33,7 +33,7 @@ public class King extends Piece{
                     castle((Rook)position.getBoard().boardArray[7][7].getOccupant());
                 }
             }
-            else if(!color && target.getBoard().boardArray[4][0].isOccupied){
+            else if(!color && !target.getBoard().boardArray[4][0].isOccupied){
                 if(target.getFile() < s.getFile()){
                     castle((Rook)position.getBoard().boardArray[0][0].getOccupant());
                 }
@@ -41,7 +41,6 @@ public class King extends Piece{
                     castle((Rook)position.getBoard().boardArray[7][0].getOccupant());
                 }
             }
-            
         }
     }
 

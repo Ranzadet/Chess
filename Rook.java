@@ -1,7 +1,6 @@
 package Chess;
 
 public class Rook extends Piece{
-    public boolean hasMoved;
 
     public Rook(Square startPos, boolean color){
         super(startPos, color);
@@ -23,7 +22,6 @@ public class Rook extends Piece{
 
     public void move(Square target){
         super.move(target);
-        hasMoved = true;
     }
 
     
