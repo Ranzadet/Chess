@@ -3,15 +3,19 @@ package Chess;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Stack;
 
 public class Board {
-    public Square[][] boardArray; // (0,0) is a1. (7,7) is h8
+    public Square[][] boardArray; // (0,0) is a8. (7,7) is h0
+    // public Piece[] activePieces = new Piece[32];
     public ArrayList<Piece> activePieces = new ArrayList<>();
     private boolean playerTurn = true;
     public ArrayList<Move> gameLog;
     private final boolean DEBUG = false;
     public int halfClock = 0;
     public int fullClock = 0;
+    public Stack<Integer> activePositions = new Stack<>();
+    public King[] kings = new King[2];
 
     public Board(){
         boardArray = new Square[8][8];
@@ -378,58 +382,101 @@ public class Board {
     public boolean wouldCheck(Move mv){
         Piece p = mv.piece;
         Square target = mv.target;
-        Piece tempPiece = null;
-        Square tempSquare = null;
-        King k = null;
-        Board b = copy(); //
-        for (int file = 0;file<8;file++){
-            for(int rank=0;rank<8;rank++){
-                if(boardArray[file][rank].isOccupied){
-                    Piece p2 = b.boardArray[file][rank].getOccupant();
-                    if(boardArray[file][rank] == p.position){
-                        tempPiece = p2;
-                    }
+        King k = p.color ? kings[0] : kings[1];
+        // Piece tempPiece = null;
+        // Square tempSquare = null;
+        // Board b = copy(); 
+        // for (int file = 0;file<8;file++){
+        //     for(int rank=0;rank<8;rank++){
+        //         if(boardArray[file][rank].isOccupied){
+        //             Piece p2 = b.boardArray[file][rank].getOccupant();
+        //             if(boardArray[file][rank] == p.position){
+        //                 tempPiece = p2;
+        //             }
 
-                    if (boardArray[file][rank] == target){
-                        tempSquare = b.boardArray[file][rank];
-                    }
+        //             if (boardArray[file][rank] == target){
+        //                 tempSquare = b.boardArray[file][rank];
+        //             }
 
-                    if(p.color){
-                        if (boardArray[file][rank].getOccupant() instanceof King){
-                            if(boardArray[file][rank].getOccupant().color){
-                                k = (King)p2;
-                            }
-                        }
-                    }
-                    else{
-                        if (boardArray[file][rank].getOccupant() instanceof King){
-                            if(!boardArray[file][rank].getOccupant().color){
-                                k = (King)p2;
-                            }
-                        }
-                    }
-                }
-                else{
-                    if(boardArray[file][rank] == target){
-                        tempSquare = b.boardArray[file][rank];
-                    }
-                }
+        //             if(p.color){
+        //                 if (boardArray[file][rank].getOccupant() instanceof King){
+        //                     if(boardArray[file][rank].getOccupant().color){
+        //                         k = (King)p2;
+        //                     }
+        //                 }
+        //             }
+        //             else{
+        //                 if (boardArray[file][rank].getOccupant() instanceof King){
+        //                     if(!boardArray[file][rank].getOccupant().color){
+        //                         k = (King)p2;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         else{
+        //             if(boardArray[file][rank] == target){
+        //                 tempSquare = b.boardArray[file][rank];
+        //             }
+        //         }
+        //     }
+        // }
+
+        // if(mv instanceof PromoteMove){
+        //     ((Pawn)tempPiece).promoteMove(tempSquare,((PromoteMove)mv).type);
+        // }
+        // else{
+        //     tempPiece.move(tempSquare);
+        // }
+
+        if(mv.castleStr.equals("") && mv.piece instanceof King && !isAdjacent(mv.piece.position, mv.target)){
+            if(mv.piece.position.getFile() > mv.target.getFile()){
+                mv.castleStr = "O-O-O";
+            }else{
+                mv.castleStr = "O-O";
+            }
+        }
+        if(mv.target.isOccupied){
+            mv.attackStr = mv.target.getOccupant().toString();
+        }
+        else{
+            if(mv.piece instanceof Pawn && mv.target.getFile() != mv.piece.position.getFile()){
+                mv.attackStr = "p";
+                mv.isPassant = true;
             }
         }
 
         if(mv instanceof PromoteMove){
-            ((Pawn)tempPiece).promoteMove(tempSquare,((PromoteMove)mv).type);
+            ((Pawn)p).promoteMove(target, ((PromoteMove)mv).type);
         }
         else{
-            tempPiece.move(tempSquare);
+            p.move(target);
         }
+
+        playerTurn = !playerTurn;
+        gameLog.add(mv);
 
         boolean checked = false;
 
+        // for (int file = 0;file<8;file++){
+        //     for(int rank = 0;rank<8;rank++){
+        //         if (b.boardArray[file][rank].isOccupied && b.boardArray[file][rank].getOccupant().color != p.color && contains(b.getVision(b.boardArray[file][rank].getOccupant()), k)){
+        //             if(b.boardArray[file][rank].getOccupant() instanceof Pawn){
+        //                 //Check to make sure the king is not directly in front of the pawn, which would not put the king in check.
+        //                 if(k.position.getFile() != file){
+        //                     checked = true;
+        //                 }
+        //             }
+        //             else{
+        //                 checked = true;
+        //             }
+        //         }
+        //     }
+        // }
+
         for (int file = 0;file<8;file++){
             for(int rank = 0;rank<8;rank++){
-                if (b.boardArray[file][rank].isOccupied && b.boardArray[file][rank].getOccupant().color != p.color && contains(b.getVision(b.boardArray[file][rank].getOccupant()), k)){
-                    if(b.boardArray[file][rank].getOccupant() instanceof Pawn){
+                if (boardArray[file][rank].isOccupied && boardArray[file][rank].getOccupant().color != p.color && contains(getVision(boardArray[file][rank].getOccupant()), k)){
+                    if(boardArray[file][rank].getOccupant() instanceof Pawn){
                         //Check to make sure the king is not directly in front of the pawn, which would not put the king in check.
                         if(k.position.getFile() != file){
                             checked = true;
@@ -442,6 +489,7 @@ public class Board {
             }
         }
 
+        unMove(mv);
         return checked;
         
     }
@@ -502,26 +550,25 @@ public class Board {
 
 
     public void searchMove(Move m){
-            if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
-                if(m.piece.position.getFile() > m.target.getFile()){
-                    m.castleStr = "O-O-O";
-                }else{
-                    m.castleStr = "O-O";
-                }
-            }
-            if(m.target.isOccupied){
-                m.attackStr = m.target.getOccupant().toString();
-            }
-            else{
-                if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
-                    m.attackStr = "p";
-                }
-            }
-            if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile() && !m.target.isOccupied){
-                m.isPassant = true;
-            }
-            
-            move(m.piece, m.target);
+        // if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
+        //     if(m.piece.position.getFile() > m.target.getFile()){
+        //         m.castleStr = "O-O-O";
+        //     }else{
+        //         m.castleStr = "O-O";
+        //     }
+        // }
+        // if(m.target.isOccupied){
+        //     m.attackStr = m.target.getOccupant().toString();
+        // }
+        // else{
+        //     if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
+        //         m.attackStr = "p";
+        //         m.isPassant = true;
+        //     }
+        // }
+        
+        move(m.piece, m.target);
+        gameLog.add(m);
     }
 
     public void move(Move m){
@@ -530,28 +577,31 @@ public class Board {
             return;
         }
         if(isValidMove(m)){
-            if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
-                if(m.piece.position.getFile() > m.target.getFile()){
-                    m.castleStr = "O-O-O";
-                }else{
-                    m.castleStr = "O-O";
-                }
-            }
-            if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile() && !m.target.isOccupied){
-                m.isPassant = true;
-            }
+            //NOTE: commented code in this method should have already been run inside of wouldCheck()
+            
+            // if(m.castleStr.equals("") && m.piece instanceof King && !isAdjacent(m.piece.position, m.target)){
+            //     if(m.piece.position.getFile() > m.target.getFile()){
+            //         m.castleStr = "O-O-O";
+            //     }else{
+            //         m.castleStr = "O-O";
+            //     }
+            // }
+            // if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile() && !m.target.isOccupied){
+            //     m.isPassant = true;
+            // }
             Move snapshotMove = new Move(m.piece.copy(this), m.target);
             snapshotMove.castleStr = m.castleStr;
             snapshotMove.isPassant = m.isPassant;
-            String atkStr = "";
-            if(m.target.isOccupied){
-                atkStr = m.target.getOccupant().toString();
-            }
-            else{
-                if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
-                    atkStr = "p";
-                }
-            }
+            String atkStr = m.attackStr;
+            // String atkStr = "";
+            // if(m.target.isOccupied){
+            //     atkStr = m.target.getOccupant().toString();
+            // }
+            // else{
+            //     if(m.piece instanceof Pawn && m.target.getFile() != m.piece.position.getFile()){
+            //         atkStr = "p";
+            //     }
+            // }
             
             move(m.piece, m.target);
             if(snapshotMove.piece instanceof Pawn && (snapshotMove.target.getRank() == 0 || snapshotMove.target.getRank() == 7)){
@@ -609,7 +659,6 @@ public class Board {
         }
     }
 
-    //TODO: test
     public void unMove(Move m){
         playerTurn = !playerTurn;
         gameLog.remove(gameLog.size()-1);
@@ -659,6 +708,7 @@ public class Board {
             m.piece.move(m.originalPosition);
             m.piece.moves -= 2;
             Pawn p = new Pawn(boardArray[m.target.getFile()][m.piece.position.getRank()], !m.piece.color);
+            p.activePos = activePositions.pop();
             p.moves = 1;
             p.hasMoved = true;
             return;
@@ -671,7 +721,9 @@ public class Board {
                 p.moves = m.piece.moves - 1;
                 m.target.setOccupant(null);
                 m.target.isOccupied = false;
-                m.piece.destroy();
+                activePieces.remove(m.piece);
+                p.setActivePos(activePositions.pop());
+                activePieces.add(p.activePos, p);
                 return;
             }
 
@@ -690,7 +742,9 @@ public class Board {
             p.moves = m.piece.moves - 1;
             m.target.setOccupant(null);
             m.target.isOccupied = false;
-            m.piece.destroy();
+            activePieces.remove(m.piece); //Here I manually remove m.piece because it's position in the activePieces array was alread pushed when
+            p.setActivePos(activePositions.pop()); //^the pawn promoted and called it's own destroy() method
+            activePieces.add(p.activePos, p);
         }
         else{
             m.piece.move(m.originalPosition);
@@ -720,8 +774,8 @@ public class Board {
         if(m.targetMoves == 0){
             replacement.hasMoved = false;
         }
-
-        
+        replacement.setActivePos(activePositions.pop());
+        activePieces.add(replacement.activePos, replacement);
 
     }
 
@@ -730,8 +784,9 @@ public class Board {
 
         ArrayList<Move> moves = new ArrayList<>();
 
-        for(Piece p : activePieces){
-            if(p.color == player){
+        for(int i = 0; i < activePieces.size(); i++){ //TODO: find way to assign places in arraylist to pieces => check activePieces before and after a move;
+            Piece p = activePieces.get(i);
+            if(p.color == player){ //Loop through the two lists until you find a difference, and then use that as the insert slot for the piece
                 Square[] spaces = getVision(p);
                 for (Square s : spaces){
                     if(p instanceof Pawn && (s.getRank() == 7 || s.getRank() == 0)){
@@ -842,40 +897,70 @@ public class Board {
     //For a standard game of chess. Future variants may include chess960 or other stuff idk
     public void standardSetup(){
         //Instatiate rooks
-        Rook r1 = new Rook(boardArray[0][0], false);
-        Rook r2 = new Rook(boardArray[7][0], false);
-        Rook r3 = new Rook(boardArray[0][7], true);
-        Rook r4 = new Rook(boardArray[7][7], true);
+        Rook r3 = new Rook(boardArray[0][0], false);
+        Rook r4 = new Rook(boardArray[7][0], false);
+        Rook r1 = new Rook(boardArray[0][7], true);
+        Rook r2 = new Rook(boardArray[7][7], true);
 
         //Instatiate knights
-        Knight n1 = new Knight(boardArray[1][0], false);
-        Knight n2 = new Knight(boardArray[6][0], false);
-        Knight n3 = new Knight(boardArray[1][7], true);
-        Knight n4 = new Knight(boardArray[6][7], true);
+        Knight n4 = new Knight(boardArray[1][0], false);
+        Knight n3 = new Knight(boardArray[6][0], false);
+        Knight n1 = new Knight(boardArray[1][7], true);
+        Knight n2 = new Knight(boardArray[6][7], true);
 
         //Instatiate bishops
-        Bishop b1 = new Bishop(boardArray[2][0], false);
-        Bishop b2 = new Bishop(boardArray[5][0], false);
-        Bishop b3 = new Bishop(boardArray[2][7], true);
-        Bishop b4 = new Bishop(boardArray[5][7], true);
+        Bishop b3 = new Bishop(boardArray[2][0], false);
+        Bishop b4 = new Bishop(boardArray[5][0], false);
+        Bishop b1 = new Bishop(boardArray[2][7], true);
+        Bishop b2 = new Bishop(boardArray[5][7], true);
 
         //Instatiate Queens
-        Queen q1 = new Queen(boardArray[3][0], false);
-        Queen q2 = new Queen(boardArray[3][7], true);
+        Queen q2 = new Queen(boardArray[3][0], false);
+        Queen q1 = new Queen(boardArray[3][7], true);
 
         //Instantiate Kings
-        King k1 = new King(boardArray[4][0], false);
-        King k2 = new King(boardArray[4][7], true);
+        King k1 = new King(boardArray[4][7], true);
+        King k2 = new King(boardArray[4][0], false);
+        // kings[0] = k1; //white
+        // kings[1] = k2; //black
 
         activePieces.addAll(Arrays.asList(new Piece[] {r1, r2, r3, r4, n1, n2, n3, n4, b1, b2, b3, b4, q1, q2, k1, k2}));
+        // activePieces[0] = k1;
+        // activePieces[1] = q1;
+        // activePieces[2] = r1;
+        // activePieces[3] = r2;
+        // activePieces[4] = b1;
+        // activePieces[5] = b2;
+        // activePieces[6] = n1;
+        // activePieces[7] = n2;
 
+        // activePieces[16] = k2;
+        // activePieces[17] = q2;
+        // activePieces[18] = r3;
+        // activePieces[19] = r4;
+        // activePieces[20] = b3;
+        // activePieces[21] = b4;
+        // activePieces[22] = n3;
+        // activePieces[23] = n4;
+        
+
+        int pos = 8;
         for (int i = 0;i<8;i++){
             Pawn p = new Pawn(boardArray[i][1], false);
             activePieces.add(p);
+            // activePieces[pos] = p;
+            // pos++;
         }
+        pos = 24;
         for (int i = 0;i<8;i++){
             Pawn p = new Pawn(boardArray[i][6], true);
             activePieces.add(p);
+            // activePieces[pos] = p;
+            // pos++;
+        }
+
+        for(int i = 0; i < activePieces.size(); i++){
+            activePieces.get(i).setActivePos(i);
         }
     }
 
@@ -907,6 +992,7 @@ public class Board {
                     }
                     else if(c == 'K'){
                         p = new King(boardArray[file][rank], true);
+                        kings[0] = (King)p;
                     }
                     else{
                         p = new Pawn(boardArray[file][rank], true);
@@ -930,6 +1016,7 @@ public class Board {
                     }
                     else if(c == 'k'){
                         p = new King(boardArray[file][rank], false);
+                        kings[1] = (King)p;
                     }
                     else{
                         p = new Pawn(boardArray[file][rank], false);
@@ -1001,5 +1088,10 @@ public class Board {
 
         //fenlis[5] => fullmove clock
         fullClock = Integer.parseInt(fenlis[5]);
+
+        //Set active positions
+        for(int i = 0; i < activePieces.size(); i++){
+            activePieces.get(i).setActivePos(i);
+        }
     }
 }

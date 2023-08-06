@@ -61,6 +61,8 @@ public class Pawn extends Piece{
             p = new Queen(position, color);
         }
         p.wasPawn = true;
+        p.setActivePos(activePos);
+        position.getBoard().activePieces.add(activePos, p);
         destroy();
     }
 

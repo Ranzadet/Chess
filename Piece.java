@@ -8,6 +8,7 @@ public abstract class Piece {
     public int value;
     public boolean hasMoved;
     public boolean wasPawn;
+    public int activePos;
 
     public Piece(Square startPos, boolean color){
         position = startPos;
@@ -31,7 +32,12 @@ public abstract class Piece {
     }
 
     public void destroy(){
+        position.getBoard().activePositions.push(activePos);
         position.getBoard().activePieces.remove(this);
+    }
+
+    public void setActivePos(int pos){
+        activePos = pos;
     }
 
     public String toString(){

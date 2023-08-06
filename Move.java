@@ -71,6 +71,7 @@ public class Move {
         target = s;
         if(s.isOccupied)
             targetMoves = s.getOccupant().moves;
+        originalPosition = p.position;
     }
 
     public String toString(){
