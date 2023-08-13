@@ -31,7 +31,7 @@ public class Pawn extends Piece{
             position.getBoard().boardArray[target.getFile()][position.getRank()].isOccupied = false;
         }
         super.move(target);
-        if(target.getRank() == 7 || target.getRank() == 0){
+        if(target.getRank() == 7 && !color || target.getRank() == 0 && color){
             Scanner scanner = new Scanner(System.in);
             System.out.println("Pawn promoting! What piece would you like to promote to?");
             String type = scanner.nextLine();
@@ -62,8 +62,9 @@ public class Pawn extends Piece{
         }
         p.wasPawn = true;
         p.setActivePos(activePos);
-        position.getBoard().activePieces.add(activePos, p);
-        destroy();
+        // position.getBoard().activePieces.add(activePos, p);
+        // destroy();
+        position.getBoard().activePieces[activePos] = p;
     }
 
 }

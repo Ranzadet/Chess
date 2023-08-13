@@ -33,7 +33,8 @@ public abstract class Piece {
 
     public void destroy(){
         position.getBoard().activePositions.push(activePos);
-        position.getBoard().activePieces.remove(this);
+        // position.getBoard().activePieces.remove(this);
+        position.getBoard().activePieces[activePos] = null;
     }
 
     public void setActivePos(int pos){
